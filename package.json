@@ -1,0 +1,35 @@
+{
+  "name": "jamit-maplibre-viewport",
+  "version": "0.1.0",
+  "description": "A lightweight, framework-agnostic viewport and safe-area manager for MapLibre GL JS applications with dynamic UI overlays.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "maplibre-gl": "^5.6.0 || ^6.0.0"
+  },
+  "devDependencies": {
+    "maplibre-gl": "^5.6.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
