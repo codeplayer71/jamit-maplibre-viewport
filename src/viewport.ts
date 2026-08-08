@@ -1,6 +1,6 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { addPadding } from './padding';
-import { measureElementRect } from './dom';
+import { isMeasurableElement, measureElementRect } from './dom';
 import {
     calculatePadding,
     calculateSafeArea,
@@ -11,6 +11,7 @@ import type {
     SafeArea,
     ViewportPadding,
 } from './types';
+
 
 const EMPTY_PADDING: ViewportPadding = {
     top: 0,
@@ -26,9 +27,28 @@ const EMPTY_SAFE_AREA: SafeArea = {
     height: 0,
 };
 
+function getMapContainer(map: MapLibreMap): HTMLElement {
+    if (typeof map.getContainer !== 'function') {
+        throw new Error(
+            'MapLibre viewport requires a map with a valid getContainer() method.',
+        );
+    }
+
+    const container = map.getContainer();
+
+    if (!isMeasurableElement(container)) {
+        throw new Error(
+            'MapLibre viewport requires a measurable map container.',
+        );
+    }
+
+    return container;
+}
+
 export function createMapLibreViewport(
     map: MapLibreMap,
 ): MapLibreViewport {
+    const mapContainer = getMapContainer(map);
     const overlays = new Map<string, MapLibreViewportOverlay>();
 
     let padding: ViewportPadding = { ...EMPTY_PADDING };
@@ -43,8 +63,18 @@ export function createMapLibreViewport(
         }
     }
 
-    function assertUsableSafeArea(): void {
-        if (safeArea.width <= 0 || safeArea.height <= 0) {
+    function assertUsableSafeArea(
+        effectivePadding: ViewportPadding,
+    ): void {
+        const effectiveSafeArea = calculateSafeArea(
+            measureElementRect(mapContainer),
+            effectivePadding,
+        );
+
+        if (
+            effectiveSafeArea.width <= 0 ||
+            effectiveSafeArea.height <= 0
+        ) {
             throw new Error(
                 'Cannot perform camera operation because the calculated safe area has no usable size.',
             );
@@ -52,7 +82,7 @@ export function createMapLibreViewport(
     }
 
     function recalculate(): void {
-        const mapRect = measureElementRect(map.getContainer());
+        const mapRect = measureElementRect(mapContainer);
 
         const overlayRects = [...overlays.values()].map((overlay) => ({
             edge: overlay.edge,
@@ -113,11 +143,32 @@ export function createMapLibreViewport(
                 scheduleRefresh();
             });
 
-    resizeObserver?.observe(map.getContainer());
+    resizeObserver?.observe(mapContainer);
 
     return {
         addOverlay(overlay) {
             assertActive();
+
+            if (overlay.id.trim().length === 0) {
+                throw new Error('Overlay id must not be empty.');
+            }
+
+            if (
+                overlay.edge !== 'top' &&
+                overlay.edge !== 'right' &&
+                overlay.edge !== 'bottom' &&
+                overlay.edge !== 'left'
+            ) {
+                throw new Error(
+                    `Overlay "${overlay.id}" has an invalid edge "${overlay.edge}".`,
+                );
+            }
+
+            if (!isMeasurableElement(overlay.element)) {
+                throw new Error(
+                    `Overlay "${overlay.id}" must provide a measurable DOM element.`,
+                );
+            }
 
             if (overlays.has(overlay.id)) {
                 throw new Error(
@@ -161,39 +212,45 @@ export function createMapLibreViewport(
         fitBounds(bounds, options = {}) {
             assertActive();
             ensureFresh();
-            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...fitBoundsOptions } = options;
+            const effectivePadding = addPadding(padding, additionalPadding);
+
+            assertUsableSafeArea(effectivePadding);
 
             map.fitBounds(bounds, {
                 ...fitBoundsOptions,
-                padding: addPadding(padding, additionalPadding),
+                padding: effectivePadding,
             });
         },
 
         flyTo(options) {
             assertActive();
             ensureFresh();
-            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...flyToOptions } = options;
+            const effectivePadding = addPadding(padding, additionalPadding);
+
+            assertUsableSafeArea(effectivePadding);
 
             map.flyTo({
                 ...flyToOptions,
-                padding: addPadding(padding, additionalPadding),
+                padding: effectivePadding,
             });
         },
 
         easeTo(options) {
             assertActive();
             ensureFresh();
-            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...easeToOptions } = options;
+            const effectivePadding = addPadding(padding, additionalPadding);
+
+            assertUsableSafeArea(effectivePadding);
 
             map.easeTo({
                 ...easeToOptions,
-                padding: addPadding(padding, additionalPadding),
+                padding: effectivePadding,
             });
         },
 

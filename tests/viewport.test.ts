@@ -293,4 +293,77 @@ describe('createMapLibreViewport', () => {
 
         expect(viewport.getPadding().bottom).toBe(400);
     });
+
+    it('rejects overlays without a measurable DOM element', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.addOverlay({
+                id: 'invalid-overlay',
+                element: {} as HTMLElement,
+                edge: 'top',
+            });
+        }).toThrow(
+            'Overlay "invalid-overlay" must provide a measurable DOM element.',
+        );
+    });
+
+    it('rejects maps without getContainer', () => {
+        expect(() => {
+            createMapLibreViewport({} as MapLibreMap);
+        }).toThrow(
+            'MapLibre viewport requires a map with a valid getContainer() method.',
+        );
+    });
+
+    it('rejects maps without a measurable container', () => {
+        expect(() => {
+            createMapLibreViewport({
+                getContainer: () => ({} as HTMLElement),
+            } as MapLibreMap);
+        }).toThrow(
+            'MapLibre viewport requires a measurable map container.',
+        );
+    });
+
+    it('rejects empty overlay ids', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.addOverlay({
+                id: '   ',
+                element: createElementMock({
+                    top: 100,
+                    right: 1300,
+                    bottom: 180,
+                    left: 300,
+                    width: 1000,
+                    height: 80,
+                }),
+                edge: 'top',
+            });
+        }).toThrow('Overlay id must not be empty.');
+    });
+
+    it('rejects invalid overlay edges at runtime', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.addOverlay({
+                id: 'invalid-edge',
+                element: createElementMock({
+                    top: 100,
+                    right: 1300,
+                    bottom: 180,
+                    left: 300,
+                    width: 1000,
+                    height: 80,
+                }),
+                // Intentionally bypass TypeScript to simulate a JavaScript consumer.
+                edge: 'center' as never,
+            });
+        }).toThrow(
+            'Overlay "invalid-edge" has an invalid edge "center".',
+        );
+    });
 });

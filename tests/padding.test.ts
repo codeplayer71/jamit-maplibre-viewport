@@ -36,6 +36,24 @@ describe('normalizePadding', () => {
             left: 0,
         });
     });
+
+    it('rejects negative padding', () => {
+        expect(() => normalizePadding(-1)).toThrow(
+            'Viewport padding values must be finite numbers greater than or equal to 0.',
+        );
+    });
+
+    it('rejects NaN padding', () => {
+        expect(() => normalizePadding(Number.NaN)).toThrow(
+            'Viewport padding values must be finite numbers greater than or equal to 0.',
+        );
+    });
+
+    it('rejects infinite padding', () => {
+        expect(() => normalizePadding(Number.POSITIVE_INFINITY)).toThrow(
+            'Viewport padding values must be finite numbers greater than or equal to 0.',
+        );
+    });
 });
 
 describe('addPadding', () => {

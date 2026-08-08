@@ -178,6 +178,34 @@ describe('fitBounds', () => {
             },
         });
     });
+
+    it('forwards MapLibre fitBounds options', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        const bounds: [[number, number], [number, number]] = [
+            [10, 20],
+            [30, 40],
+        ];
+
+        viewport.fitBounds(bounds, {
+            maxZoom: 14,
+            duration: 500,
+            linear: true,
+        });
+
+        expect(fitBounds).toHaveBeenCalledWith(bounds, {
+            maxZoom: 14,
+            duration: 500,
+            linear: true,
+            padding: {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
+        });
+    });
 });
 
 describe('flyTo', () => {
@@ -251,6 +279,33 @@ describe('flyTo', () => {
                 right: 40,
                 bottom: 20,
                 left: 390,
+            },
+        });
+    });
+
+    it('forwards MapLibre flyTo options', () => {
+        const { map, flyTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.flyTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            bearing: 20,
+            pitch: 45,
+            duration: 600,
+        });
+
+        expect(flyTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            bearing: 20,
+            pitch: 45,
+            duration: 600,
+            padding: {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
             },
         });
     });
@@ -328,6 +383,33 @@ describe('easeTo', () => {
             },
         });
     });
+
+    it('forwards MapLibre easeTo options', () => {
+        const { map, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.easeTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            bearing: 20,
+            pitch: 45,
+            duration: 600,
+        });
+
+        expect(easeTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            bearing: 20,
+            pitch: 45,
+            duration: 600,
+            padding: {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
+        });
+    });
 });
 
 describe('unusable safe area', () => {
@@ -373,5 +455,30 @@ describe('unusable safe area', () => {
         expect(fitBounds).not.toHaveBeenCalled();
         expect(flyTo).not.toHaveBeenCalled();
         expect(easeTo).not.toHaveBeenCalled();
+    });
+
+    it('prevents camera operations when consumer padding removes the usable safe area', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        const expectedError =
+            'Cannot perform camera operation because the calculated safe area has no usable size.';
+
+        expect(() => {
+            viewport.fitBounds(
+                [
+                    [10, 20],
+                    [30, 40],
+                ],
+                {
+                    padding: {
+                        left: 600,
+                        right: 600,
+                    },
+                },
+            );
+        }).toThrow(expectedError);
+
+        expect(fitBounds).not.toHaveBeenCalled();
     });
 });
