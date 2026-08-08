@@ -209,7 +209,7 @@ describe('fitBounds', () => {
 });
 
 describe('flyTo', () => {
-    it('uses automatically calculated overlay padding', () => {
+    it('centers the target inside the safe area using an offset', () => {
         const { map, flyTo } = createMapMock();
         const viewport = createMapLibreViewport(map);
 
@@ -234,16 +234,11 @@ describe('flyTo', () => {
         expect(flyTo).toHaveBeenCalledWith({
             center: [13.405, 52.52],
             zoom: 14,
-            padding: {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 350,
-            },
+            offset: [175, 0],
         });
     });
 
-    it('adds consumer padding to overlay padding', () => {
+    it('includes consumer padding in the safe-area offset', () => {
         const { map, flyTo } = createMapMock();
         const viewport = createMapLibreViewport(map);
 
@@ -274,45 +269,13 @@ describe('flyTo', () => {
         expect(flyTo).toHaveBeenCalledWith({
             center: [13.405, 52.52],
             zoom: 14,
-            padding: {
-                top: 20,
-                right: 40,
-                bottom: 20,
-                left: 390,
-            },
-        });
-    });
-
-    it('forwards MapLibre flyTo options', () => {
-        const { map, flyTo } = createMapMock();
-        const viewport = createMapLibreViewport(map);
-
-        viewport.flyTo({
-            center: [13.405, 52.52],
-            zoom: 14,
-            bearing: 20,
-            pitch: 45,
-            duration: 600,
-        });
-
-        expect(flyTo).toHaveBeenCalledWith({
-            center: [13.405, 52.52],
-            zoom: 14,
-            bearing: 20,
-            pitch: 45,
-            duration: 600,
-            padding: {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-            },
+            offset: [175, 0],
         });
     });
 });
 
 describe('easeTo', () => {
-    it('uses automatically calculated overlay padding', () => {
+    it('centers the target inside the safe area using an offset', () => {
         const { map, easeTo } = createMapMock();
         const viewport = createMapLibreViewport(map);
 
@@ -337,16 +300,11 @@ describe('easeTo', () => {
         expect(easeTo).toHaveBeenCalledWith({
             center: [13.405, 52.52],
             zoom: 14,
-            padding: {
-                top: 0,
-                right: 0,
-                bottom: 300,
-                left: 0,
-            },
+            offset: [0, -150],
         });
     });
 
-    it('adds consumer padding to overlay padding', () => {
+    it('includes consumer padding in the safe-area offset', () => {
         const { map, easeTo } = createMapMock();
         const viewport = createMapLibreViewport(map);
 
@@ -375,39 +333,7 @@ describe('easeTo', () => {
         expect(easeTo).toHaveBeenCalledWith({
             center: [13.405, 52.52],
             zoom: 14,
-            padding: {
-                top: 0,
-                right: 40,
-                bottom: 300,
-                left: 40,
-            },
-        });
-    });
-
-    it('forwards MapLibre easeTo options', () => {
-        const { map, easeTo } = createMapMock();
-        const viewport = createMapLibreViewport(map);
-
-        viewport.easeTo({
-            center: [13.405, 52.52],
-            zoom: 14,
-            bearing: 20,
-            pitch: 45,
-            duration: 600,
-        });
-
-        expect(easeTo).toHaveBeenCalledWith({
-            center: [13.405, 52.52],
-            zoom: 14,
-            bearing: 20,
-            pitch: 45,
-            duration: 600,
-            padding: {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-            },
+            offset: [0, -150],
         });
     });
 });

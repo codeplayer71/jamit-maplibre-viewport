@@ -21,7 +21,9 @@
     "build": "tsdown",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "demo": "vite example",
+    "demo:build": "vite build example"
   },
   "peerDependencies": {
     "maplibre-gl": "^5.6.0 || ^6.0.0"
@@ -30,6 +32,7 @@
     "maplibre-gl": "^5.6.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.3",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10"
   }
 }

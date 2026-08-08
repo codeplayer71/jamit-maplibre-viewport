@@ -11,6 +11,8 @@ export type OverlayEdge =
     | 'bottom'
     | 'left';
 
+export type Coordinate = [number, number];
+
 export type Rect = {
     top: number;
     right: number;
@@ -54,6 +56,17 @@ export type ViewportFitBoundsOptions =
     padding?: ViewportPaddingInput;
 };
 
+export type ViewportFitCoordinatesOptions =
+    Omit<
+        EaseToOptions,
+        'center' | 'zoom' | 'padding' | 'offset'
+    > & {
+    padding?: ViewportPaddingInput;
+    minZoom?: number;
+    maxZoom?: number;
+    zoomStep?: number;
+};
+
 export type ViewportFlyToOptions =
     Omit<FlyToOptions, 'padding'> & {
     padding?: ViewportPaddingInput;
@@ -73,6 +86,11 @@ export type MapLibreViewport = {
     fitBounds: (
         bounds: LngLatBoundsLike,
         options?: ViewportFitBoundsOptions,
+    ) => void;
+
+    fitCoordinates: (
+        coordinates: Coordinate[],
+        options?: ViewportFitCoordinatesOptions,
     ) => void;
 
     flyTo: (options: ViewportFlyToOptions) => void;

@@ -49,3 +49,12 @@ export function addPadding(
         left: basePadding.left + normalizedAdditionalPadding.left,
     };
 }
+
+export function getPaddingOffset(
+    padding: ViewportPadding,
+): [number, number] {
+    return [
+        (padding.left - padding.right) / 2,
+        (padding.top - padding.bottom) / 2,
+    ];
+}

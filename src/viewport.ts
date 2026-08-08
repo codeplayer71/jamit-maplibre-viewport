@@ -1,6 +1,13 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { addPadding } from './padding';
+import {
+    addPadding,
+    getPaddingOffset,
+    normalizePadding,
+} from './padding';
 import { isMeasurableElement, measureElementRect } from './dom';
+import { calculateMapLocalObstacle } from './obstacles';
+import { findFitCoordinatesCandidate } from './fit-coordinates';
+import { projectToMercator } from './mercator';
 import {
     calculatePadding,
     calculateSafeArea,
@@ -8,9 +15,12 @@ import {
 import type {
     MapLibreViewport,
     MapLibreViewportOverlay,
+    OverlayRect,
     SafeArea,
     ViewportPadding,
+    Rect,
 } from './types';
+import { expandObstacle } from './obstacles';
 
 
 const EMPTY_PADDING: ViewportPadding = {
@@ -53,6 +63,10 @@ export function createMapLibreViewport(
 
     let padding: ViewportPadding = { ...EMPTY_PADDING };
     let safeArea: SafeArea = { ...EMPTY_SAFE_AREA };
+    let measuredOverlays: OverlayRect[] = [];
+    let obstacles: Rect[] = [];
+    let mapWidth = 0;
+    let mapHeight = 0;
     let dirty = true;
     let destroyed = false;
     let scheduledFrame: number | null = null;
@@ -84,12 +98,21 @@ export function createMapLibreViewport(
     function recalculate(): void {
         const mapRect = measureElementRect(mapContainer);
 
-        const overlayRects = [...overlays.values()].map((overlay) => ({
+        mapWidth = mapRect.width;
+        mapHeight = mapRect.height;
+
+        measuredOverlays = [...overlays.values()].map((overlay) => ({
             edge: overlay.edge,
             rect: measureElementRect(overlay.element),
         }));
 
-        padding = calculatePadding(mapRect, overlayRects);
+        obstacles = measuredOverlays.flatMap(({ rect }) => {
+            const obstacle = calculateMapLocalObstacle(mapRect, rect);
+
+            return obstacle ? [obstacle] : [];
+        });
+
+        padding = calculatePadding(mapRect, measuredOverlays);
         safeArea = calculateSafeArea(mapRect, padding);
         dirty = false;
     }
@@ -224,18 +247,95 @@ export function createMapLibreViewport(
             });
         },
 
+        fitCoordinates(coordinates, options = {}) {
+            assertActive();
+            ensureFresh();
+
+            const {
+                padding: additionalPadding,
+                minZoom = map.getMinZoom(),
+                maxZoom = map.getMaxZoom(),
+                zoomStep,
+                ...cameraOptions
+            } = options;
+
+            const consumerPadding = normalizePadding(additionalPadding);
+
+            const mercatorPoints = coordinates.map(
+                ([longitude, latitude]) =>
+                    projectToMercator(longitude, latitude),
+            );
+
+            const expandedObstacles = obstacles.map((obstacle) =>
+                expandObstacle(
+                    obstacle,
+                    mapWidth,
+                    mapHeight,
+                    consumerPadding,
+                ),
+            );
+
+            const candidate = findFitCoordinatesCandidate(
+                mercatorPoints,
+                mapWidth,
+                mapHeight,
+                expandedObstacles,
+                consumerPadding,
+                {
+                    minZoom,
+                    maxZoom,
+                    ...(zoomStep !== undefined
+                        ? { zoomStep }
+                        : {}),
+                },
+            );
+
+            if (!candidate) {
+                throw new Error(
+                    'Cannot fit coordinates into the available map area.',
+                );
+            }
+
+            map.easeTo({
+                ...cameraOptions,
+                center: candidate.center,
+                zoom: candidate.zoom,
+            });
+        },
+
         flyTo(options) {
             assertActive();
             ensureFresh();
 
-            const { padding: additionalPadding, ...flyToOptions } = options;
-            const effectivePadding = addPadding(padding, additionalPadding);
+            const {
+                padding: additionalPadding,
+                offset: consumerOffset,
+                ...flyToOptions
+            } = options;
+
+            const effectivePadding = addPadding(
+                padding,
+                additionalPadding,
+            );
 
             assertUsableSafeArea(effectivePadding);
 
+            const [offsetX, offsetY] = getPaddingOffset(effectivePadding);
+
+            const consumerOffsetX = Array.isArray(consumerOffset)
+                ? consumerOffset[0]
+                : (consumerOffset?.x ?? 0);
+
+            const consumerOffsetY = Array.isArray(consumerOffset)
+                ? consumerOffset[1]
+                : (consumerOffset?.y ?? 0);
+
             map.flyTo({
                 ...flyToOptions,
-                padding: effectivePadding,
+                offset: [
+                    offsetX + consumerOffsetX,
+                    offsetY + consumerOffsetY,
+                ],
             });
         },
 
@@ -243,14 +343,35 @@ export function createMapLibreViewport(
             assertActive();
             ensureFresh();
 
-            const { padding: additionalPadding, ...easeToOptions } = options;
-            const effectivePadding = addPadding(padding, additionalPadding);
+            const {
+                padding: additionalPadding,
+                offset: consumerOffset,
+                ...easeToOptions
+            } = options;
+
+            const effectivePadding = addPadding(
+                padding,
+                additionalPadding,
+            );
 
             assertUsableSafeArea(effectivePadding);
 
+            const [offsetX, offsetY] = getPaddingOffset(effectivePadding);
+
+            const consumerOffsetX = Array.isArray(consumerOffset)
+                ? consumerOffset[0]
+                : (consumerOffset?.x ?? 0);
+
+            const consumerOffsetY = Array.isArray(consumerOffset)
+                ? consumerOffset[1]
+                : (consumerOffset?.y ?? 0);
+
             map.easeTo({
                 ...easeToOptions,
-                padding: effectivePadding,
+                offset: [
+                    offsetX + consumerOffsetX,
+                    offsetY + consumerOffsetY,
+                ],
             });
         },
 
