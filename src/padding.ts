@@ -3,23 +3,35 @@ import type {
     ViewportPaddingInput,
 } from './types';
 
+function validatePaddingValue(value: number): number {
+    if (!Number.isFinite(value) || value < 0) {
+        throw new Error(
+            'Viewport padding values must be finite numbers greater than or equal to 0.',
+        );
+    }
+
+    return value;
+}
+
 export function normalizePadding(
     padding: ViewportPaddingInput = 0,
 ): ViewportPadding {
     if (typeof padding === 'number') {
+        const value = validatePaddingValue(padding);
+
         return {
-            top: padding,
-            right: padding,
-            bottom: padding,
-            left: padding,
+            top: value,
+            right: value,
+            bottom: value,
+            left: value,
         };
     }
 
     return {
-        top: padding.top ?? 0,
-        right: padding.right ?? 0,
-        bottom: padding.bottom ?? 0,
-        left: padding.left ?? 0,
+        top: validatePaddingValue(padding.top ?? 0),
+        right: validatePaddingValue(padding.right ?? 0),
+        bottom: validatePaddingValue(padding.bottom ?? 0),
+        left: validatePaddingValue(padding.left ?? 0),
     };
 }
 
@@ -36,4 +48,13 @@ export function addPadding(
         bottom: basePadding.bottom + normalizedAdditionalPadding.bottom,
         left: basePadding.left + normalizedAdditionalPadding.left,
     };
+}
+
+export function getPaddingOffset(
+    padding: ViewportPadding,
+): [number, number] {
+    return [
+        (padding.left - padding.right) / 2,
+        (padding.top - padding.bottom) / 2,
+    ];
 }

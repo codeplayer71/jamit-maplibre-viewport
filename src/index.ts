@@ -5,6 +5,9 @@ export type {
     MapLibreViewportOverlay,
     OverlayEdge,
     SafeArea,
+    ViewportEaseToOptions,
+    ViewportFitBoundsOptions,
+    ViewportFlyToOptions,
     ViewportPadding,
     ViewportPaddingInput,
 } from './types';

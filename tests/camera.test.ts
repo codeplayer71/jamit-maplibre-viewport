@@ -1,0 +1,410 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { Map as MapLibreMap } from 'maplibre-gl';
+import { createMapLibreViewport } from '../src/viewport';
+
+function createElementMock(
+    rect: {
+        top: number;
+        right: number;
+        bottom: number;
+        left: number;
+        width: number;
+        height: number;
+    },
+): HTMLElement {
+    return {
+        getBoundingClientRect: () => ({
+            ...rect,
+            x: rect.left,
+            y: rect.top,
+            toJSON: () => ({}),
+        }),
+    } as HTMLElement;
+}
+
+function createMapMock() {
+    const container = createElementMock({
+        top: 100,
+        right: 1300,
+        bottom: 900,
+        left: 300,
+        width: 1000,
+        height: 800,
+    });
+
+    const fitBounds = vi.fn();
+    const flyTo = vi.fn();
+    const easeTo = vi.fn();
+
+    const map = {
+        getContainer: () => container,
+        fitBounds,
+        flyTo,
+        easeTo,
+    } as unknown as MapLibreMap;
+
+    return {
+        map,
+        fitBounds,
+        flyTo,
+        easeTo,
+    };
+}
+
+describe('fitBounds', () => {
+    it('uses automatically calculated overlay padding', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'header',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 180,
+                left: 300,
+                width: 1000,
+                height: 80,
+            }),
+            edge: 'top',
+        });
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: createElementMock({
+                top: 600,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 300,
+            }),
+            edge: 'bottom',
+        });
+
+        const bounds: [[number, number], [number, number]] = [
+            [10, 20],
+            [30, 40],
+        ];
+
+        viewport.fitBounds(bounds, {
+            maxZoom: 14,
+        });
+
+        expect(fitBounds).toHaveBeenCalledWith(bounds, {
+            maxZoom: 14,
+            padding: {
+                top: 80,
+                right: 0,
+                bottom: 300,
+                left: 0,
+            },
+        });
+    });
+
+    it('adds numeric consumer padding to overlay padding', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'header',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 180,
+                left: 300,
+                width: 1000,
+                height: 80,
+            }),
+            edge: 'top',
+        });
+
+        const bounds: [[number, number], [number, number]] = [
+            [10, 20],
+            [30, 40],
+        ];
+
+        viewport.fitBounds(bounds, {
+            padding: 40,
+        });
+
+        expect(fitBounds).toHaveBeenCalledWith(bounds, {
+            padding: {
+                top: 120,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+        });
+    });
+
+    it('adds partial consumer padding to overlay padding', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: createElementMock({
+                top: 600,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 300,
+            }),
+            edge: 'bottom',
+        });
+
+        const bounds: [[number, number], [number, number]] = [
+            [10, 20],
+            [30, 40],
+        ];
+
+        viewport.fitBounds(bounds, {
+            padding: {
+                left: 40,
+                right: 40,
+            },
+            maxZoom: 14,
+        });
+
+        expect(fitBounds).toHaveBeenCalledWith(bounds, {
+            maxZoom: 14,
+            padding: {
+                top: 0,
+                right: 40,
+                bottom: 300,
+                left: 40,
+            },
+        });
+    });
+
+    it('forwards MapLibre fitBounds options', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        const bounds: [[number, number], [number, number]] = [
+            [10, 20],
+            [30, 40],
+        ];
+
+        viewport.fitBounds(bounds, {
+            maxZoom: 14,
+            duration: 500,
+            linear: true,
+        });
+
+        expect(fitBounds).toHaveBeenCalledWith(bounds, {
+            maxZoom: 14,
+            duration: 500,
+            linear: true,
+            padding: {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
+        });
+    });
+});
+
+describe('flyTo', () => {
+    it('centers the target inside the safe area using an offset', () => {
+        const { map, flyTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'sidebar',
+            element: createElementMock({
+                top: 100,
+                right: 650,
+                bottom: 900,
+                left: 300,
+                width: 350,
+                height: 800,
+            }),
+            edge: 'left',
+        });
+
+        viewport.flyTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+        });
+
+        expect(flyTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            offset: [175, 0],
+        });
+    });
+
+    it('includes consumer padding in the safe-area offset', () => {
+        const { map, flyTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'sidebar',
+            element: createElementMock({
+                top: 100,
+                right: 650,
+                bottom: 900,
+                left: 300,
+                width: 350,
+                height: 800,
+            }),
+            edge: 'left',
+        });
+
+        viewport.flyTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                top: 20,
+                right: 40,
+                bottom: 20,
+                left: 40,
+            },
+        });
+
+        expect(flyTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            offset: [175, 0],
+        });
+    });
+});
+
+describe('easeTo', () => {
+    it('centers the target inside the safe area using an offset', () => {
+        const { map, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: createElementMock({
+                top: 600,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 300,
+            }),
+            edge: 'bottom',
+        });
+
+        viewport.easeTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+        });
+
+        expect(easeTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            offset: [0, -150],
+        });
+    });
+
+    it('includes consumer padding in the safe-area offset', () => {
+        const { map, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: createElementMock({
+                top: 600,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 300,
+            }),
+            edge: 'bottom',
+        });
+
+        viewport.easeTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                left: 40,
+                right: 40,
+            },
+        });
+
+        expect(easeTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            offset: [0, -150],
+        });
+    });
+});
+
+describe('unusable safe area', () => {
+    it('prevents camera operations when no usable safe area remains', () => {
+        const { map, fitBounds, flyTo, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'full-map-overlay',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 800,
+            }),
+            edge: 'top',
+        });
+
+        const expectedError =
+            'Cannot perform camera operation because the calculated safe area has no usable size.';
+
+        expect(() => {
+            viewport.fitBounds([
+                [10, 20],
+                [30, 40],
+            ]);
+        }).toThrow(expectedError);
+
+        expect(() => {
+            viewport.flyTo({
+                center: [13.405, 52.52],
+            });
+        }).toThrow(expectedError);
+
+        expect(() => {
+            viewport.easeTo({
+                center: [13.405, 52.52],
+            });
+        }).toThrow(expectedError);
+
+        expect(fitBounds).not.toHaveBeenCalled();
+        expect(flyTo).not.toHaveBeenCalled();
+        expect(easeTo).not.toHaveBeenCalled();
+    });
+
+    it('prevents camera operations when consumer padding removes the usable safe area', () => {
+        const { map, fitBounds } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        const expectedError =
+            'Cannot perform camera operation because the calculated safe area has no usable size.';
+
+        expect(() => {
+            viewport.fitBounds(
+                [
+                    [10, 20],
+                    [30, 40],
+                ],
+                {
+                    padding: {
+                        left: 600,
+                        right: 600,
+                    },
+                },
+            );
+        }).toThrow(expectedError);
+
+        expect(fitBounds).not.toHaveBeenCalled();
+    });
+});
