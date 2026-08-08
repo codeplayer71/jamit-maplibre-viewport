@@ -1,3 +1,10 @@
+import type {
+    EaseToOptions,
+    FitBoundsOptions,
+    FlyToOptions,
+    LngLatBoundsLike,
+} from 'maplibre-gl';
+
 export type OverlayEdge =
     | 'top'
     | 'right'
@@ -42,11 +49,36 @@ export type SafeArea = {
     height: number;
 };
 
+export type ViewportFitBoundsOptions =
+    Omit<FitBoundsOptions, 'padding'> & {
+    padding?: ViewportPaddingInput;
+};
+
+export type ViewportFlyToOptions =
+    Omit<FlyToOptions, 'padding'> & {
+    padding?: ViewportPaddingInput;
+};
+
+export type ViewportEaseToOptions =
+    Omit<EaseToOptions, 'padding'> & {
+    padding?: ViewportPaddingInput;
+};
+
 export type MapLibreViewport = {
     addOverlay: (overlay: MapLibreViewportOverlay) => void;
     removeOverlay: (id: string) => void;
     getSafeArea: () => SafeArea;
     getPadding: () => ViewportPadding;
+
+    fitBounds: (
+        bounds: LngLatBoundsLike,
+        options?: ViewportFitBoundsOptions,
+    ) => void;
+
+    flyTo: (options: ViewportFlyToOptions) => void;
+
+    easeTo: (options: ViewportEaseToOptions) => void;
+
     refresh: () => void;
     destroy: () => void;
 };
