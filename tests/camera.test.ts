@@ -214,6 +214,46 @@ describe('flyTo', () => {
             },
         });
     });
+
+    it('adds consumer padding to overlay padding', () => {
+        const { map, flyTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'sidebar',
+            element: createElementMock({
+                top: 100,
+                right: 650,
+                bottom: 900,
+                left: 300,
+                width: 350,
+                height: 800,
+            }),
+            edge: 'left',
+        });
+
+        viewport.flyTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                top: 20,
+                right: 40,
+                bottom: 20,
+                left: 40,
+            },
+        });
+
+        expect(flyTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                top: 20,
+                right: 40,
+                bottom: 20,
+                left: 390,
+            },
+        });
+    });
 });
 
 describe('easeTo', () => {
@@ -249,5 +289,89 @@ describe('easeTo', () => {
                 left: 0,
             },
         });
+    });
+
+    it('adds consumer padding to overlay padding', () => {
+        const { map, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: createElementMock({
+                top: 600,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 300,
+            }),
+            edge: 'bottom',
+        });
+
+        viewport.easeTo({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                left: 40,
+                right: 40,
+            },
+        });
+
+        expect(easeTo).toHaveBeenCalledWith({
+            center: [13.405, 52.52],
+            zoom: 14,
+            padding: {
+                top: 0,
+                right: 40,
+                bottom: 300,
+                left: 40,
+            },
+        });
+    });
+});
+
+describe('unusable safe area', () => {
+    it('prevents camera operations when no usable safe area remains', () => {
+        const { map, fitBounds, flyTo, easeTo } = createMapMock();
+        const viewport = createMapLibreViewport(map);
+
+        viewport.addOverlay({
+            id: 'full-map-overlay',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 800,
+            }),
+            edge: 'top',
+        });
+
+        const expectedError =
+            'Cannot perform camera operation because the calculated safe area has no usable size.';
+
+        expect(() => {
+            viewport.fitBounds([
+                [10, 20],
+                [30, 40],
+            ]);
+        }).toThrow(expectedError);
+
+        expect(() => {
+            viewport.flyTo({
+                center: [13.405, 52.52],
+            });
+        }).toThrow(expectedError);
+
+        expect(() => {
+            viewport.easeTo({
+                center: [13.405, 52.52],
+            });
+        }).toThrow(expectedError);
+
+        expect(fitBounds).not.toHaveBeenCalled();
+        expect(flyTo).not.toHaveBeenCalled();
+        expect(easeTo).not.toHaveBeenCalled();
     });
 });

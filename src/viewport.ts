@@ -43,6 +43,14 @@ export function createMapLibreViewport(
         }
     }
 
+    function assertUsableSafeArea(): void {
+        if (safeArea.width <= 0 || safeArea.height <= 0) {
+            throw new Error(
+                'Cannot perform camera operation because the calculated safe area has no usable size.',
+            );
+        }
+    }
+
     function recalculate(): void {
         const mapRect = measureElementRect(map.getContainer());
 
@@ -153,6 +161,7 @@ export function createMapLibreViewport(
         fitBounds(bounds, options = {}) {
             assertActive();
             ensureFresh();
+            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...fitBoundsOptions } = options;
 
@@ -165,6 +174,7 @@ export function createMapLibreViewport(
         flyTo(options) {
             assertActive();
             ensureFresh();
+            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...flyToOptions } = options;
 
@@ -177,6 +187,7 @@ export function createMapLibreViewport(
         easeTo(options) {
             assertActive();
             ensureFresh();
+            assertUsableSafeArea();
 
             const { padding: additionalPadding, ...easeToOptions } = options;
 

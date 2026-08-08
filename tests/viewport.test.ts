@@ -259,4 +259,38 @@ describe('createMapLibreViewport', () => {
             });
         }).toThrow('MapLibre viewport has been destroyed.');
     });
+
+    it('recalculates geometry on refresh', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        let bottomSheetTop = 700;
+
+        const bottomSheet = {
+            getBoundingClientRect: () => ({
+                top: bottomSheetTop,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 900 - bottomSheetTop,
+                x: 300,
+                y: bottomSheetTop,
+                toJSON: () => ({}),
+            }),
+        } as HTMLElement;
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: bottomSheet,
+            edge: 'bottom',
+        });
+
+        expect(viewport.getPadding().bottom).toBe(200);
+
+        bottomSheetTop = 500;
+
+        viewport.refresh();
+
+        expect(viewport.getPadding().bottom).toBe(400);
+    });
 });

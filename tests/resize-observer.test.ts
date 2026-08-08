@@ -28,14 +28,34 @@ describe('ResizeObserver lifecycle', () => {
     const observe = vi.fn();
     const unobserve = vi.fn();
     const disconnect = vi.fn();
+    const requestAnimationFrameMock = vi.fn();
+    const cancelAnimationFrameMock = vi.fn();
+
+    let resizeObserverCallback: ResizeObserverCallback;
 
     beforeEach(() => {
         observe.mockClear();
         unobserve.mockClear();
         disconnect.mockClear();
+        requestAnimationFrameMock.mockClear();
+        cancelAnimationFrameMock.mockClear();
+
+        requestAnimationFrameMock.mockReturnValue(1);
+
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            requestAnimationFrameMock,
+        );
+
+        vi.stubGlobal(
+            'cancelAnimationFrame',
+            cancelAnimationFrameMock,
+        );
 
         class ResizeObserverMock {
-            constructor(_callback: ResizeObserverCallback) {}
+            constructor(callback: ResizeObserverCallback) {
+                resizeObserverCallback = callback;
+            }
 
             observe = observe;
             unobserve = unobserve;
@@ -112,5 +132,70 @@ describe('ResizeObserver lifecycle', () => {
         viewport.destroy();
 
         expect(disconnect).toHaveBeenCalledOnce();
+    });
+
+    it('recalculates geometry after an observed resize', () => {
+        const mapContainer = createElementMock();
+
+        let bottomSheetTop = 600;
+
+        const bottomSheet = {
+            getBoundingClientRect: () => ({
+                top: bottomSheetTop,
+                right: 1000,
+                bottom: 800,
+                left: 0,
+                width: 1000,
+                height: 800 - bottomSheetTop,
+                x: 0,
+                y: bottomSheetTop,
+                toJSON: () => ({}),
+            }),
+        } as HTMLElement;
+
+        const viewport = createMapLibreViewport(
+            createMapMock(mapContainer),
+        );
+
+        viewport.addOverlay({
+            id: 'bottom-sheet',
+            element: bottomSheet,
+            edge: 'bottom',
+        });
+
+        expect(viewport.getPadding().bottom).toBe(200);
+
+        bottomSheetTop = 400;
+
+        resizeObserverCallback([], {} as ResizeObserver);
+
+        expect(viewport.getPadding().bottom).toBe(400);
+    });
+
+    it('batches multiple resize events into a single animation frame', () => {
+        const mapContainer = createElementMock();
+
+        createMapLibreViewport(
+            createMapMock(mapContainer),
+        );
+
+        resizeObserverCallback([], {} as ResizeObserver);
+        resizeObserverCallback([], {} as ResizeObserver);
+        resizeObserverCallback([], {} as ResizeObserver);
+
+        expect(requestAnimationFrameMock).toHaveBeenCalledOnce();
+    });
+
+    it('cancels a scheduled animation frame on destroy', () => {
+        const mapContainer = createElementMock();
+        const viewport = createMapLibreViewport(
+            createMapMock(mapContainer),
+        );
+
+        resizeObserverCallback([], {} as ResizeObserver);
+
+        viewport.destroy();
+
+        expect(cancelAnimationFrameMock).toHaveBeenCalledWith(1);
     });
 });
