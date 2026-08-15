@@ -14,23 +14,27 @@ app.innerHTML = `
     Sidebar
   </aside>
 
-  <div class="demo__actions">
-    <button type="button" data-action="fit-bounds">
-      Fit Bounds
-    </button>
+<div class="demo__actions">
+  <button type="button" data-action="fit-bounds">
+    Fit Coordinates
+  </button>
 
-    <button type="button" data-action="fly-to">
-      Fly To
-    </button>
+  <button type="button" data-action="fly-to">
+    Fly To
+  </button>
 
-    <button type="button" data-action="ease-to">
-      Ease To
-    </button>
+  <button type="button" data-action="ease-to">
+    Ease To
+  </button>
 
-    <button type="button" data-action="toggle-sidebar">
-      Toggle Sidebar
-    </button>
-  </div>
+  <button type="button" data-action="toggle-sidebar">
+    Toggle Sidebar
+  </button>
+
+  <button type="button" data-action="toggle-bottom-panel">
+    Resize Bottom Panel
+  </button>
+</div>
 
   <div id="map" class="demo__map"></div>
 
@@ -58,12 +62,17 @@ const toggleSidebarButton = document.querySelector<HTMLButtonElement>(
     '[data-action="toggle-sidebar"]',
 );
 
+const toggleBottomPanelButton = document.querySelector<HTMLButtonElement>(
+    '[data-action="toggle-bottom-panel"]',
+);
+
 if (
     !sidebar ||
     !bottomPanel ||
     !fitBoundsButton ||
     !flyToButton ||
     !toggleSidebarButton ||
+    !toggleBottomPanelButton ||
     !easeToButton
 ) {
     throw new Error('Demo elements not found.');
@@ -137,4 +146,8 @@ easeToButton.addEventListener('click', () => {
 
 toggleSidebarButton.addEventListener('click', () => {
     sidebar.classList.toggle('demo__sidebar--collapsed');
+});
+
+toggleBottomPanelButton.addEventListener('click', () => {
+    bottomPanel.classList.toggle('demo__bottom-panel--expanded');
 });
