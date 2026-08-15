@@ -129,6 +129,48 @@ describe('calculateFitCoordinatesCandidate', () => {
         expect(candidate).not.toBeNull();
         expect(candidate?.zoom).toBe(10);
     });
+
+    it('handles overlapping obstacles', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const candidate = calculateFitCoordinatesCandidate(
+            points,
+            10,
+            1000,
+            800,
+            [
+                {
+                    top: 0,
+                    right: 300,
+                    bottom: 800,
+                    left: 0,
+                    width: 300,
+                    height: 800,
+                },
+                {
+                    top: 500,
+                    right: 1000,
+                    bottom: 800,
+                    left: 250,
+                    width: 750,
+                    height: 300,
+                },
+            ],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate?.zoom).toBe(10);
+    });
 });
 
 describe('findFitCoordinatesCandidate', () => {
