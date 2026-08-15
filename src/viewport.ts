@@ -254,6 +254,16 @@ export function createMapLibreViewport(
                 throw new Error('At least one coordinate is required.');
             }
 
+            if (
+                coordinates.some(
+                    ([longitude, latitude]) =>
+                        !Number.isFinite(longitude) ||
+                        !Number.isFinite(latitude),
+                )
+            ) {
+                throw new Error('Coordinates must contain finite longitude and latitude values.');
+            }
+
             ensureFresh();
 
             const {

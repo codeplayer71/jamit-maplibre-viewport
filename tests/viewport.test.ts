@@ -403,4 +403,24 @@ describe('createMapLibreViewport', () => {
             'Cannot fit coordinates into the available map area.',
         );
     });
+
+    it('rejects non-finite coordinate values', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [Number.NaN, 52.52],
+            ]);
+        }).toThrow(
+            'Coordinates must contain finite longitude and latitude values.',
+        );
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [13.405, Number.POSITIVE_INFINITY],
+            ]);
+        }).toThrow(
+            'Coordinates must contain finite longitude and latitude values.',
+        );
+    });
 });
