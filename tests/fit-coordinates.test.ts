@@ -393,4 +393,32 @@ describe('findFitCoordinatesCandidate', () => {
             withoutPadding!.zoom,
         );
     });
+
+    it('supports a fixed zoom level', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const candidate = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+            {
+                minZoom: 10,
+                maxZoom: 10,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate?.zoom).toBe(10);
+    });
 });
