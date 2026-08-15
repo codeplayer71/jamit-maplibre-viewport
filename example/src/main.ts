@@ -1,4 +1,4 @@
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapLibreViewport } from '../../src';
 import './style.css';
@@ -10,40 +10,103 @@ if (!app) {
 }
 
 app.innerHTML = `
-  <aside class="demo__sidebar">
-    Sidebar
-  </aside>
+    <aside class="demo__sidebar">
+        <div class="demo__panel-header">
+            <span class="demo__panel-eyebrow">
+                Registered overlay
+            </span>
 
-  <div class="demo__actions">
-    <button type="button" data-action="fit-bounds">
-      Fit Bounds
-    </button>
+            <h2>Sidebar</h2>
 
-    <button type="button" data-action="fly-to">
-      Fly To
-    </button>
+            <p>
+                This panel occupies part of the map and is automatically
+                measured by the viewport manager.
+            </p>
+        </div>
 
-    <button type="button" data-action="ease-to">
-      Ease To
-    </button>
+        <div class="demo__panel-meta">
+            <div>
+                <span>Edge</span>
+                <strong>left</strong>
+            </div>
 
-    <button type="button" data-action="toggle-sidebar">
-      Toggle Sidebar
-    </button>
-  </div>
+            <div>
+                <span>Current width</span>
+                <strong data-value="sidebar-width">—</strong>
+            </div>
+        </div>
+    </aside>
 
-  <div id="map" class="demo__map"></div>
+    <div class="demo__actions">
+        <button type="button" data-action="fit-coordinates">
+            Fit Coordinates
+        </button>
 
-  <section class="demo__bottom-panel">
-    Bottom Panel
-  </section>
+        <button type="button" data-action="fly-to">
+            Fly To
+        </button>
+
+        <button type="button" data-action="ease-to">
+            Ease To
+        </button>
+
+        <button type="button" data-action="toggle-sidebar">
+            Toggle Sidebar
+        </button>
+
+        <button type="button" data-action="toggle-bottom-panel">
+            Resize Bottom Panel
+        </button>
+    </div>
+
+    <div id="map" class="demo__map"></div>
+
+    <section class="demo__bottom-panel">
+        <div class="demo__panel-header">
+            <span class="demo__panel-eyebrow">
+                Dynamic overlay
+            </span>
+
+            <h2>Bottom Panel</h2>
+
+            <p>
+                Resize this panel and run Fit Coordinates again.
+                The viewport manager uses the updated geometry automatically.
+            </p>
+        </div>
+
+        <div class="demo__panel-meta">
+            <div>
+                <span>Edge</span>
+                <strong>bottom</strong>
+            </div>
+
+            <div>
+                <span>Current height</span>
+                <strong data-value="bottom-panel-height">—</strong>
+            </div>
+        </div>
+    </section>
 `;
 
-const sidebar = document.querySelector<HTMLElement>('.demo__sidebar');
-const bottomPanel = document.querySelector<HTMLElement>('.demo__bottom-panel');
+const sidebar = document.querySelector<HTMLElement>(
+    '.demo__sidebar',
+);
 
-const fitBoundsButton = document.querySelector<HTMLButtonElement>(
-    '[data-action="fit-bounds"]',
+const bottomPanel = document.querySelector<HTMLElement>(
+    '.demo__bottom-panel',
+);
+
+const sidebarWidthValue = document.querySelector<HTMLElement>(
+    '[data-value="sidebar-width"]',
+);
+
+const bottomPanelHeightValue = document.querySelector<HTMLElement>(
+    '[data-value="bottom-panel-height"]',
+);
+
+const fitCoordinatesButton = document.querySelector<HTMLButtonElement>(
+    '[data-action="fit-coordinates"]',
 );
 
 const flyToButton = document.querySelector<HTMLButtonElement>(
@@ -58,13 +121,20 @@ const toggleSidebarButton = document.querySelector<HTMLButtonElement>(
     '[data-action="toggle-sidebar"]',
 );
 
+const toggleBottomPanelButton = document.querySelector<HTMLButtonElement>(
+    '[data-action="toggle-bottom-panel"]',
+);
+
 if (
     !sidebar ||
     !bottomPanel ||
-    !fitBoundsButton ||
+    !sidebarWidthValue ||
+    !bottomPanelHeightValue ||
+    !fitCoordinatesButton ||
     !flyToButton ||
+    !easeToButton ||
     !toggleSidebarButton ||
-    !easeToButton
+    !toggleBottomPanelButton
 ) {
     throw new Error('Demo elements not found.');
 }
@@ -109,7 +179,33 @@ map.on('load', () => {
     }
 });
 
-fitBoundsButton.addEventListener('click', () => {
+/*
+ * This observer is only used to display the current dimensions
+ * inside the demo UI.
+ *
+ * The viewport package observes registered overlays independently.
+ */
+const updateOverlayMeasurements = (): void => {
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const bottomPanelRect = bottomPanel.getBoundingClientRect();
+
+    sidebarWidthValue.textContent =
+        `${Math.round(sidebarRect.width)} px`;
+
+    bottomPanelHeightValue.textContent =
+        `${Math.round(bottomPanelRect.height)} px`;
+};
+
+const measurementObserver = new ResizeObserver(
+    updateOverlayMeasurements,
+);
+
+measurementObserver.observe(sidebar);
+measurementObserver.observe(bottomPanel);
+
+updateOverlayMeasurements();
+
+fitCoordinatesButton.addEventListener('click', () => {
     viewport.fitCoordinates(markerCoordinates, {
         padding: 40,
         maxZoom: 14,
@@ -136,5 +232,25 @@ easeToButton.addEventListener('click', () => {
 });
 
 toggleSidebarButton.addEventListener('click', () => {
-    sidebar.classList.toggle('demo__sidebar--collapsed');
+    sidebar.classList.toggle(
+        'demo__sidebar--collapsed',
+    );
 });
+
+toggleBottomPanelButton.addEventListener('click', () => {
+    bottomPanel.classList.toggle(
+        'demo__bottom-panel--expanded',
+    );
+});
+
+window.addEventListener(
+    'beforeunload',
+    () => {
+        measurementObserver.disconnect();
+        viewport.destroy();
+        map.remove();
+    },
+    {
+        once: true,
+    },
+);

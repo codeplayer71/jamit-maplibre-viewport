@@ -34,6 +34,8 @@ function createMapMock(): MapLibreMap {
 
     return {
         getContainer: () => container,
+        getBearing: () => 0,
+        getPitch: () => 0,
     } as MapLibreMap;
 }
 
@@ -364,6 +366,138 @@ describe('createMapLibreViewport', () => {
             });
         }).toThrow(
             'Overlay "invalid-edge" has an invalid edge "center".',
+        );
+    });
+
+    it('throws when fitCoordinates is called without coordinates', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([]);
+        }).toThrow('At least one coordinate is required.');
+    });
+
+    it('throws when coordinates cannot fit into the available map area', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        viewport.addOverlay({
+            id: 'full-overlay',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 800,
+            }),
+            edge: 'bottom',
+        });
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 0,
+                    maxZoom: 14,
+                },
+            );
+        }).toThrow(
+            'Cannot fit coordinates into the available map area.',
+        );
+    });
+
+    it('rejects non-finite coordinate values', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [Number.NaN, 52.52],
+            ]);
+        }).toThrow(
+            'Coordinates must contain finite longitude and latitude values.',
+        );
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [13.405, Number.POSITIVE_INFINITY],
+            ]);
+        }).toThrow(
+            'Coordinates must contain finite longitude and latitude values.',
+        );
+    });
+
+    it('rejects invalid fitCoordinates zoom options', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 10,
+                    maxZoom: 5,
+                },
+            );
+        }).toThrow(
+            'minZoom must not be greater than maxZoom.',
+        );
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 0,
+                    maxZoom: 14,
+                    zoomStep: 0,
+                },
+            );
+        }).toThrow(
+            'zoomStep must be greater than 0.',
+        );
+    });
+
+    it('rejects fitCoordinates for rotated or pitched maps', () => {
+        const rotatedMap = {
+            ...createMapMock(),
+            getBearing: () => 15,
+            getPitch: () => 0,
+        } as MapLibreMap;
+
+        const pitchedMap = {
+            ...createMapMock(),
+            getBearing: () => 0,
+            getPitch: () => 30,
+        } as MapLibreMap;
+
+        const rotatedViewport = createMapLibreViewport(rotatedMap);
+        const pitchedViewport = createMapLibreViewport(pitchedMap);
+
+        expect(() => {
+            rotatedViewport.fitCoordinates([
+                [13.405, 52.52],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
+        );
+
+        expect(() => {
+            pitchedViewport.fitCoordinates([
+                [13.405, 52.52],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
+        );
+    });
+
+    it('rejects coordinates crossing the antimeridian', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [179, 10],
+                [-179, 10],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently does not support coordinates crossing the antimeridian.',
         );
     });
 });

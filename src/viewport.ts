@@ -1,4 +1,4 @@
-import type { Map as MapLibreMap } from 'maplibre-gl';
+
 import {
     addPadding,
     getPaddingOffset,
@@ -13,6 +13,7 @@ import {
     calculateSafeArea,
 } from './geometry';
 import type {
+    MapLibreMapLike,
     MapLibreViewport,
     MapLibreViewportOverlay,
     OverlayRect,
@@ -37,7 +38,7 @@ const EMPTY_SAFE_AREA: SafeArea = {
     height: 0,
 };
 
-function getMapContainer(map: MapLibreMap): HTMLElement {
+function getMapContainer(map: MapLibreMapLike): HTMLElement {
     if (typeof map.getContainer !== 'function') {
         throw new Error(
             'MapLibre viewport requires a map with a valid getContainer() method.',
@@ -56,7 +57,7 @@ function getMapContainer(map: MapLibreMap): HTMLElement {
 }
 
 export function createMapLibreViewport(
-    map: MapLibreMap,
+    map: MapLibreMapLike,
 ): MapLibreViewport {
     const mapContainer = getMapContainer(map);
     const overlays = new Map<string, MapLibreViewportOverlay>();
@@ -249,6 +250,37 @@ export function createMapLibreViewport(
 
         fitCoordinates(coordinates, options = {}) {
             assertActive();
+
+            if (map.getBearing() !== 0 || map.getPitch() !== 0) {
+                throw new Error(
+                    'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
+                );
+            }
+
+            if (coordinates.length === 0) {
+                throw new Error('At least one coordinate is required.');
+            }
+
+            if (
+                coordinates.some(
+                    ([longitude, latitude]) =>
+                        !Number.isFinite(longitude) ||
+                        !Number.isFinite(latitude),
+                )
+            ) {
+                throw new Error('Coordinates must contain finite longitude and latitude values.');
+            }
+
+            const longitudes = coordinates.map(([longitude]) => longitude);
+            const longitudeSpan =
+                Math.max(...longitudes) - Math.min(...longitudes);
+
+            if (longitudeSpan > 180) {
+                throw new Error(
+                    'fitCoordinates currently does not support coordinates crossing the antimeridian.',
+                );
+            }
+
             ensureFresh();
 
             const {
