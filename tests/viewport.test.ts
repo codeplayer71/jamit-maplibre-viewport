@@ -423,4 +423,33 @@ describe('createMapLibreViewport', () => {
             'Coordinates must contain finite longitude and latitude values.',
         );
     });
+
+    it('rejects invalid fitCoordinates zoom options', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 10,
+                    maxZoom: 5,
+                },
+            );
+        }).toThrow(
+            'minZoom must not be greater than maxZoom.',
+        );
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 0,
+                    maxZoom: 14,
+                    zoomStep: 0,
+                },
+            );
+        }).toThrow(
+            'zoomStep must be greater than 0.',
+        );
+    });
 });
