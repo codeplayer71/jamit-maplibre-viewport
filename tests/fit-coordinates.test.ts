@@ -525,4 +525,51 @@ describe('findFitCoordinatesCandidate', () => {
         expect(Number.isFinite(candidate!.center[0])).toBe(true);
         expect(Number.isFinite(candidate!.center[1])).toBe(true);
     });
+
+    it('shifts the camera center for asymmetric padding', () => {
+        const point = projectToMercator(13.405, 52.52);
+
+        const centeredCandidate = findFitCoordinatesCandidate(
+            [point],
+            1000,
+            800,
+            [],
+            {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
+            {
+                minZoom: 10,
+                maxZoom: 10,
+            },
+        );
+
+        const paddedCandidate = findFitCoordinatesCandidate(
+            [point],
+            1000,
+            800,
+            [],
+            {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 200,
+            },
+            {
+                minZoom: 10,
+                maxZoom: 10,
+            },
+        );
+
+        expect(centeredCandidate).not.toBeNull();
+        expect(paddedCandidate).not.toBeNull();
+
+        expect(centeredCandidate?.center[0]).toBeCloseTo(13.405, 5);
+
+        expect(paddedCandidate!.center[0]).toBeLessThan(
+            centeredCandidate!.center[0],
+        );
+    });
 });
