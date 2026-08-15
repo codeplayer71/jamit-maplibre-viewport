@@ -436,6 +436,36 @@ describe('findFitCoordinatesCandidate', () => {
         );
     });
 
+    it('finds a lower zoom for a very small map viewport', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const candidate = findFitCoordinatesCandidate(
+            points,
+            220,
+            180,
+            [],
+            {
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate!.zoom).toBeLessThan(14);
+        expect(candidate!.zoom).toBeGreaterThanOrEqual(0);
+    });
+
     it('supports a fixed zoom level', () => {
         const points = [
             projectToMercator(13.405, 52.52),
