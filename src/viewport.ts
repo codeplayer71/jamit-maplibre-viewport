@@ -270,6 +270,16 @@ export function createMapLibreViewport(
                 throw new Error('Coordinates must contain finite longitude and latitude values.');
             }
 
+            const longitudes = coordinates.map(([longitude]) => longitude);
+            const longitudeSpan =
+                Math.max(...longitudes) - Math.min(...longitudes);
+
+            if (longitudeSpan > 180) {
+                throw new Error(
+                    'fitCoordinates currently does not support coordinates crossing the antimeridian.',
+                );
+            }
+
             ensureFresh();
 
             const {

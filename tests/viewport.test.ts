@@ -487,4 +487,17 @@ describe('createMapLibreViewport', () => {
             'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
         );
     });
+
+    it('rejects coordinates crossing the antimeridian', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([
+                [179, 10],
+                [-179, 10],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently does not support coordinates crossing the antimeridian.',
+        );
+    });
 });
