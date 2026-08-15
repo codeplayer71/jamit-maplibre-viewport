@@ -49,3 +49,45 @@ jobs:
 
       - name: Build demo
         run: pnpm demo:build
+
+  maplibre-compatibility:
+    name: MapLibre ${{ matrix.maplibre }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        maplibre:
+          - 5.6.0
+          - 6.0.0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install MapLibre ${{ matrix.maplibre }}
+        run: pnpm add --save-dev maplibre-gl@${{ matrix.maplibre }}
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build package
+        run: pnpm build
+
+      - name: Build demo
+        run: pnpm demo:build
