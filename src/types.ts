@@ -5,6 +5,27 @@ import type {
     LngLatBoundsLike,
 } from 'maplibre-gl';
 
+export type MapLibreMapLike = {
+    getContainer: () => HTMLElement;
+    getMinZoom: () => number;
+    getMaxZoom: () => number;
+    getBearing: () => number;
+    getPitch: () => number;
+
+    fitBounds: (
+        bounds: LngLatBoundsLike,
+        options?: FitBoundsOptions,
+    ) => unknown;
+
+    flyTo: (
+        options: FlyToOptions,
+    ) => unknown;
+
+    easeTo: (
+        options: EaseToOptions,
+    ) => unknown;
+};
+
 export type OverlayEdge =
     | 'top'
     | 'right'

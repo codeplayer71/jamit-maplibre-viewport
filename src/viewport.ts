@@ -1,4 +1,4 @@
-import type { Map as MapLibreMap } from 'maplibre-gl';
+
 import {
     addPadding,
     getPaddingOffset,
@@ -13,6 +13,7 @@ import {
     calculateSafeArea,
 } from './geometry';
 import type {
+    MapLibreMapLike,
     MapLibreViewport,
     MapLibreViewportOverlay,
     OverlayRect,
@@ -37,7 +38,7 @@ const EMPTY_SAFE_AREA: SafeArea = {
     height: 0,
 };
 
-function getMapContainer(map: MapLibreMap): HTMLElement {
+function getMapContainer(map: MapLibreMapLike): HTMLElement {
     if (typeof map.getContainer !== 'function') {
         throw new Error(
             'MapLibre viewport requires a map with a valid getContainer() method.',
@@ -56,7 +57,7 @@ function getMapContainer(map: MapLibreMap): HTMLElement {
 }
 
 export function createMapLibreViewport(
-    map: MapLibreMap,
+    map: MapLibreMapLike,
 ): MapLibreViewport {
     const mapContainer = getMapContainer(map);
     const overlays = new Map<string, MapLibreViewportOverlay>();
