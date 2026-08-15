@@ -34,6 +34,8 @@ function createMapMock(): MapLibreMap {
 
     return {
         getContainer: () => container,
+        getBearing: () => 0,
+        getPitch: () => 0,
     } as MapLibreMap;
 }
 
@@ -450,6 +452,39 @@ describe('createMapLibreViewport', () => {
             );
         }).toThrow(
             'zoomStep must be greater than 0.',
+        );
+    });
+
+    it('rejects fitCoordinates for rotated or pitched maps', () => {
+        const rotatedMap = {
+            ...createMapMock(),
+            getBearing: () => 15,
+            getPitch: () => 0,
+        } as MapLibreMap;
+
+        const pitchedMap = {
+            ...createMapMock(),
+            getBearing: () => 0,
+            getPitch: () => 30,
+        } as MapLibreMap;
+
+        const rotatedViewport = createMapLibreViewport(rotatedMap);
+        const pitchedViewport = createMapLibreViewport(pitchedMap);
+
+        expect(() => {
+            rotatedViewport.fitCoordinates([
+                [13.405, 52.52],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
+        );
+
+        expect(() => {
+            pitchedViewport.fitCoordinates([
+                [13.405, 52.52],
+            ]);
+        }).toThrow(
+            'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
         );
     });
 });

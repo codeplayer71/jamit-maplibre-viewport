@@ -250,6 +250,12 @@ export function createMapLibreViewport(
         fitCoordinates(coordinates, options = {}) {
             assertActive();
 
+            if (map.getBearing() !== 0 || map.getPitch() !== 0) {
+                throw new Error(
+                    'fitCoordinates currently requires a map with bearing 0 and pitch 0.',
+                );
+            }
+
             if (coordinates.length === 0) {
                 throw new Error('At least one coordinate is required.');
             }
