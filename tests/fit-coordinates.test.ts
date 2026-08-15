@@ -493,4 +493,36 @@ describe('findFitCoordinatesCandidate', () => {
         expect(candidate).not.toBeNull();
         expect(candidate?.zoom).toBe(10);
     });
+
+    it('fits coordinates near the Web Mercator latitude limit', () => {
+        const points = [
+            projectToMercator(10, 84.9),
+            projectToMercator(10.2, 84.95),
+            projectToMercator(9.8, 84.85),
+        ];
+
+        const candidate = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate!.zoom).toBeGreaterThanOrEqual(0);
+        expect(candidate!.zoom).toBeLessThanOrEqual(14);
+        expect(Number.isFinite(candidate!.center[0])).toBe(true);
+        expect(Number.isFinite(candidate!.center[1])).toBe(true);
+    });
 });
