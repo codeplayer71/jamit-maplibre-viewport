@@ -213,4 +213,31 @@ describe('findFitCoordinatesCandidate', () => {
             );
         }).toThrow('minZoom must not be greater than maxZoom.');
     });
+
+    it('fits a single coordinate', () => {
+        const point = projectToMercator(13.405, 52.52);
+
+        const candidate = findFitCoordinatesCandidate(
+            [point],
+            1000,
+            800,
+            [],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate?.zoom).toBe(14);
+        expect(candidate?.center[0]).toBeCloseTo(13.405, 5);
+        expect(candidate?.center[1]).toBeCloseTo(52.52, 5);
+    });
 });
