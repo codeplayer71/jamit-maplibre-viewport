@@ -374,4 +374,33 @@ describe('createMapLibreViewport', () => {
             viewport.fitCoordinates([]);
         }).toThrow('At least one coordinate is required.');
     });
+
+    it('throws when coordinates cannot fit into the available map area', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        viewport.addOverlay({
+            id: 'full-overlay',
+            element: createElementMock({
+                top: 100,
+                right: 1300,
+                bottom: 900,
+                left: 300,
+                width: 1000,
+                height: 800,
+            }),
+            edge: 'bottom',
+        });
+
+        expect(() => {
+            viewport.fitCoordinates(
+                [[13.405, 52.52]],
+                {
+                    minZoom: 0,
+                    maxZoom: 14,
+                },
+            );
+        }).toThrow(
+            'Cannot fit coordinates into the available map area.',
+        );
+    });
 });
