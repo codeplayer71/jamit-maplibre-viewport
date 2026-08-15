@@ -21,6 +21,7 @@
     "build": "tsdown",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:package": "npm run build && node tests/package-import.mjs",
     "typecheck": "tsc --noEmit",
     "demo": "vite example",
     "demo:build": "vite build example"
