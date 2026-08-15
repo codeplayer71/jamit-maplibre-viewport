@@ -18,7 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/codeplayer71/jamit-maplibre-viewport.git"
   },
-  "homepage": "https://github.com/codeplayer71/jamit-maplibre-viewport#readme",
+  "homepage": "https://jamit.one/packages/jamit-maplibre-viewport",
   "bugs": {
     "url": "https://github.com/codeplayer71/jamit-maplibre-viewport/issues"
   },
