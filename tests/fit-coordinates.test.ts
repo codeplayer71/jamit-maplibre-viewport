@@ -282,4 +282,64 @@ describe('findFitCoordinatesCandidate', () => {
         expect(candidate?.center[0]).toBeCloseTo(13.405, 5);
         expect(candidate?.center[1]).toBeCloseTo(52.52, 5);
     });
+
+    it('reduces the zoom when obstacles limit the available space', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const withoutObstacle = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        const withObstacle = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [
+                {
+                    top: 400,
+                    right: 1000,
+                    bottom: 800,
+                    left: 0,
+                    width: 1000,
+                    height: 400,
+                },
+            ],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        expect(withoutObstacle).not.toBeNull();
+        expect(withObstacle).not.toBeNull();
+
+        expect(withObstacle!.zoom).toBeLessThan(
+            withoutObstacle!.zoom,
+        );
+    });
 });
