@@ -2,7 +2,32 @@
   "name": "jamit-maplibre-viewport",
   "version": "0.1.0",
   "description": "A lightweight, framework-agnostic viewport and safe-area manager for MapLibre GL JS applications with dynamic UI overlays.",
+  "keywords": [
+    "maplibre",
+    "maplibre-gl",
+    "viewport",
+    "safe-area",
+    "map",
+    "camera",
+    "fit-bounds",
+    "overlay",
+    "resize-observer",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codeplayer71/jamit-maplibre-viewport.git"
+  },
+  "homepage": "https://github.com/codeplayer71/jamit-maplibre-viewport#readme",
+  "bugs": {
+    "url": "https://github.com/codeplayer71/jamit-maplibre-viewport/issues"
+  },
+  "author": "JamIT",
   "type": "module",
+  "packageManager": "pnpm@10.18.1",
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "sideEffects": false,
   "files": [
@@ -21,7 +46,7 @@
     "build": "tsdown",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:package": "npm run build && node tests/package-import.mjs",
+    "test:package": "pnpm build && node tests/package-import.mjs",
     "typecheck": "tsc --noEmit",
     "demo": "vite example",
     "demo:build": "vite build example"
