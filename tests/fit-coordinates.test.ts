@@ -87,6 +87,48 @@ describe('calculateFitCoordinatesCandidate', () => {
         expect(candidate).not.toBeNull();
         expect(candidate?.zoom).toBe(10);
     });
+
+    it('finds a valid camera with a sidebar and partial bottom panel', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const candidate = calculateFitCoordinatesCandidate(
+            points,
+            10,
+            1200,
+            800,
+            [
+                {
+                    top: 40,
+                    right: 360,
+                    bottom: 800,
+                    left: 0,
+                    width: 360,
+                    height: 760,
+                },
+                {
+                    top: 556,
+                    right: 1200,
+                    bottom: 800,
+                    left: 304,
+                    width: 896,
+                    height: 244,
+                },
+            ],
+            {
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40,
+            },
+        );
+
+        expect(candidate).not.toBeNull();
+        expect(candidate?.zoom).toBe(10);
+    });
 });
 
 describe('findFitCoordinatesCandidate', () => {
