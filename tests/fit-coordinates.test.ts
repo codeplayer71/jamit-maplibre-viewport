@@ -342,4 +342,55 @@ describe('findFitCoordinatesCandidate', () => {
             withoutObstacle!.zoom,
         );
     });
+
+    it('reduces the zoom when additional padding limits the available space', () => {
+        const points = [
+            projectToMercator(13.405, 52.52),
+            projectToMercator(13.35, 52.5),
+            projectToMercator(13.46, 52.54),
+        ];
+
+        const withoutPadding = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [],
+            {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        const withPadding = findFitCoordinatesCandidate(
+            points,
+            1000,
+            800,
+            [],
+            {
+                top: 160,
+                right: 160,
+                bottom: 160,
+                left: 160,
+            },
+            {
+                minZoom: 0,
+                maxZoom: 14,
+                zoomStep: 0.1,
+            },
+        );
+
+        expect(withoutPadding).not.toBeNull();
+        expect(withPadding).not.toBeNull();
+
+        expect(withPadding!.zoom).toBeLessThan(
+            withoutPadding!.zoom,
+        );
+    });
 });
