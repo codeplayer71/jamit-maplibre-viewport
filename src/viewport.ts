@@ -249,6 +249,11 @@ export function createMapLibreViewport(
 
         fitCoordinates(coordinates, options = {}) {
             assertActive();
+
+            if (coordinates.length === 0) {
+                throw new Error('At least one coordinate is required.');
+            }
+
             ensureFresh();
 
             const {

@@ -366,4 +366,12 @@ describe('createMapLibreViewport', () => {
             'Overlay "invalid-edge" has an invalid edge "center".',
         );
     });
+
+    it('throws when fitCoordinates is called without coordinates', () => {
+        const viewport = createMapLibreViewport(createMapMock());
+
+        expect(() => {
+            viewport.fitCoordinates([]);
+        }).toThrow('At least one coordinate is required.');
+    });
 });
